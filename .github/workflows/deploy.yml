@@ -1,0 +1,77 @@
+# Builds the site and publishes it to GitHub Pages on every push to main.
+#
+# No personal access token is needed. GitHub's official Pages actions authenticate
+# themselves using the short-lived token this workflow requests below (id-token: write),
+# so nothing secret is ever stored in this repo.
+#
+# The custom domain (toploadedtreasures.com) is preserved because website/public/CNAME is
+# copied into the build output by Vite on every build.
+
+name: Deploy site
+
+on:
+  # Every push to main rebuilds and republishes the live site.
+  push:
+    branches: [main]
+  # Lets you re-run a deploy by hand from the Actions tab without changing any code.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# If two pushes land close together, let the newer one finish rather than cancelling it
+# midway through a publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install dependencies
+        working-directory: website
+        run: npm ci
+
+      - name: Build the site
+        working-directory: website
+        run: npm run build
+
+      # Fail loudly here rather than silently publishing a site that would drop the domain.
+      - name: Confirm CNAME survived the build
+        working-directory: website
+        run: |
+          test -f dist/CNAME || { echo "ERROR: dist/CNAME missing - custom domain would break"; exit 1; }
+          grep -qx 'toploadedtreasures.com' dist/CNAME || { echo "ERROR: dist/CNAME has wrong contents:"; cat dist/CNAME; exit 1; }
+          echo "CNAME OK: $(cat dist/CNAME)"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload the built site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
