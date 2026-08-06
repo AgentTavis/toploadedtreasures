@@ -1,0 +1,34 @@
+# Dependencies — reinstalled by `npm install`, never committed.
+node_modules/
+
+# Build output — GitHub Actions builds this fresh on every push.
+dist/
+dist-ssr/
+.vite/
+
+# Secrets — never commit these.
+.env
+.env.*
+!.env.example
+
+# Local deploy scripts (superseded by the GitHub Actions workflow).
+deploy.py
+deploy_root.py
+
+# Original full-resolution photo library (~68 MB). Kept out of the repo so clones stay
+# fast; the web-ready versions live in website/public/assets.
+Cards/
+Extras/
+Logos/
+Shows/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.local
+.idea/
+.vscode/
+
+# Screenshots and scratch files
+.playwright-mcp/
+*.jpeg.tmp

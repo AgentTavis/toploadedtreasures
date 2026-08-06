@@ -1,0 +1,390 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand tokens pulled from the coastal badge logo */
+  --navy-950: #0A1119;
+  --navy-900: #0E1720;
+  --navy-800: #1B2838;
+  --cream: #F4E8C8;
+  --rust: #C0562B;
+  --gold: #E7B44C;
+  --gold-hi: #F7D982;
+  --teal: #2E7D74;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Classic (non-overlay) scrollbars eat width on the right only, so every centered
+       element lands ~half a scrollbar-width left of the true viewport center. That read
+       as "the logo is off-center." Reserving the gutter on BOTH edges keeps the content
+       box concentric with the viewport. No-op where scrollbars are overlays (mobile). */
+    scrollbar-gutter: stable both-edges;
+  }
+  body {
+    @apply bg-navy-950 text-cream font-sans antialiased;
+    background-image:
+      radial-gradient(60% 40% at 78% 0%, rgba(192, 86, 43, 0.14), transparent 60%),
+      radial-gradient(55% 45% at 12% 8%, rgba(46, 125, 116, 0.10), transparent 60%);
+    background-repeat: no-repeat;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: rgba(231, 180, 76, 0.35);
+    color: #fff;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display uppercase tracking-tight;
+    text-wrap: balance;
+  }
+  /* Respect reduced motion globally */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  .container-tlt {
+    @apply mx-auto w-full max-w-6xl px-5 sm:px-6 lg:px-8;
+  }
+
+  /* Kicker / eyebrow label */
+  .kicker {
+    @apply font-mono text-[11px] sm:text-xs uppercase tracking-[0.28em] text-gold;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-display text-lg
+           uppercase tracking-wide transition-all duration-200 cursor-pointer select-none
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950;
+    min-height: 44px;
+  }
+  .btn-primary {
+    @apply btn bg-rust text-cream hover:bg-rust-bright shadow-glow-rust hover:-translate-y-0.5;
+  }
+  .btn-gold {
+    @apply btn text-navy-950 hover:-translate-y-0.5 shadow-glow-gold;
+    background: linear-gradient(135deg, var(--gold-hi), var(--gold) 55%, var(--gold) 100%);
+  }
+  .btn-ghost {
+    @apply btn border border-cream/20 bg-white/5 text-cream hover:border-gold/60 hover:bg-white/10 backdrop-blur;
+  }
+
+  /* Foil / gradient text */
+  .text-foil {
+    background: linear-gradient(100deg, var(--gold-hi), #fff 20%, var(--gold) 45%, var(--rust) 75%, var(--gold-hi));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    @apply animate-shimmer;
+  }
+  .text-gold-grad {
+    background: linear-gradient(180deg, var(--gold-hi), var(--gold) 60%, var(--gold-deep, #B4832C));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Surface card */
+  .surface {
+    @apply rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm;
+  }
+  .surface-hover {
+    @apply transition-all duration-300 hover:border-gold/40 hover:bg-white/[0.06] hover:-translate-y-1;
+  }
+
+  /* Gold foil surface (mystery packs) */
+  .foil-surface {
+    background:
+      linear-gradient(150deg, rgba(247, 217, 130, 0.16), rgba(180, 131, 44, 0.05) 45%, rgba(14, 23, 32, 0.2)),
+      rgba(27, 40, 56, 0.55);
+    @apply rounded-2xl border border-gold/30 backdrop-blur-sm;
+  }
+
+  .hairline {
+    @apply h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent;
+  }
+
+  /* ---------- Cursor-follow brand glow (GlowCard) ---------- */
+  /* Hue is LOCKED to the warm range: it only drifts rust (~34) -> gold (~50) with the
+     cursor's horizontal viewport position, so the glow never turns green / blue / purple.
+     Coords are element-relative, set by the single shared listener in GlowCard.jsx. */
+  [data-glow] {
+    --glow-base: 34; /* amber / rust hue */
+    --glow-spread: 16; /* small spread: hue stays 34 -> 50, all warm */
+    --glow-sat: 92%;
+    --glow-hue: calc(var(--glow-base) + (var(--glow-xp, 0.5) * var(--glow-spread)));
+    --glow-size: 250px;
+    --glow-border: 1.5px;
+    position: relative;
+    isolation: isolate;
+  }
+  /* Soft inner bloom: above the card's own background, below its content */
+  [data-glow]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      var(--glow-size) var(--glow-size) at var(--glow-x, -9999px) var(--glow-y, -9999px),
+      hsl(var(--glow-hue) var(--glow-sat) 66% / 0.16),
+      transparent 60%
+    );
+  }
+  /* Gold border arc that lights up along the edge nearest the cursor */
+  [data-glow]::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    padding: var(--glow-border);
+    pointer-events: none;
+    background: radial-gradient(
+      calc(var(--glow-size) * 0.85) calc(var(--glow-size) * 0.85) at var(--glow-x, -9999px) var(--glow-y, -9999px),
+      hsl(var(--glow-hue) var(--glow-sat) 62% / 0.95),
+      transparent 65%
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+  }
+
+  /* ---------- Holographic tilt card (technique inspired by simeydotme/pokemon-cards-css, */
+  /*            applied to Top Loaded Treasures' own graded card photos) ---------- */
+  .holo {
+    perspective: 1000px;
+  }
+  .holo__rotator {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transform-style: preserve-3d;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
+    box-shadow: 0 22px 48px -18px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(247, 217, 130, 0.14);
+    will-change: transform;
+  }
+  .holo:hover .holo__rotator {
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(247, 217, 130, 0.4),
+      0 0 40px -10px rgba(231, 180, 76, 0.35);
+  }
+  .holo__img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    background: #0b1119;
+  }
+  .holo__glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: var(--o, 0);
+    background: radial-gradient(
+      circle at var(--mx, 50%) var(--my, 50%),
+      rgba(255, 255, 255, 0.55),
+      rgba(255, 255, 255, 0.08) 35%,
+      rgba(255, 255, 255, 0) 55%
+    );
+    mix-blend-mode: soft-light;
+    transition: opacity 0.35s ease;
+  }
+  .holo__foil {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: calc(var(--o, 0) * 0.6);
+    background-image: repeating-linear-gradient(
+      110deg,
+      rgba(255, 95, 109, 0.5) 0%,
+      rgba(255, 209, 102, 0.5) 8%,
+      rgba(95, 255, 191, 0.5) 16%,
+      rgba(95, 155, 255, 0.5) 24%,
+      rgba(214, 95, 255, 0.5) 32%,
+      rgba(255, 95, 109, 0.5) 40%
+    );
+    background-size: 220% 220%;
+    background-position: calc(var(--mx, 50%) * 1.1) calc(var(--my, 50%) * 1.1);
+    mix-blend-mode: color-dodge;
+    filter: saturate(1.25) contrast(1.05);
+    transition: opacity 0.35s ease;
+  }
+  .holo__frame {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(247, 217, 130, 0.28), inset 0 0 30px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .holo__rotator { transform: none !important; }
+    .holo__foil, .holo__glare { opacity: 0 !important; }
+  }
+
+  /* Scroll-reveal group (IntersectionObserver-driven via Reveal.jsx) */
+  .reveal-group [data-reveal] {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .reveal-group.is-in [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+  .reveal-group [data-reveal]:nth-child(1) { transition-delay: 0s; }
+  .reveal-group [data-reveal]:nth-child(2) { transition-delay: 0.07s; }
+  .reveal-group [data-reveal]:nth-child(3) { transition-delay: 0.14s; }
+  .reveal-group [data-reveal]:nth-child(4) { transition-delay: 0.21s; }
+  .reveal-group [data-reveal]:nth-child(5) { transition-delay: 0.28s; }
+  .reveal-group [data-reveal]:nth-child(6) { transition-delay: 0.35s; }
+  .reveal-group [data-reveal]:nth-child(7) { transition-delay: 0.42s; }
+  .reveal-group [data-reveal]:nth-child(8) { transition-delay: 0.49s; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-group [data-reveal] {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none !important;
+    }
+  }
+
+  /* ---------- Seamless infinite marquee ---------- */
+  .marquee {
+    overflow: hidden;
+    /* Soft fade at both edges so words fade in/out instead of hard-cutting */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+  }
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    flex-wrap: nowrap;
+    animation-name: marquee-scroll;
+    animation-timing-function: linear; /* constant speed, never appears to pause */
+    animation-iteration-count: infinite;
+    will-change: transform;
+  }
+  .marquee__group {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .marquee__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-right: 1.5rem; /* even trailing space so copies tile without seams */
+    white-space: nowrap;
+  }
+  .marquee__word {
+    @apply font-display text-lg uppercase tracking-[0.2em] text-cream/70;
+  }
+  .marquee__sep {
+    @apply text-gold;
+  }
+
+  /* Card marquee — same seamless technique as .marquee above, but the track carries
+     review cards instead of words. Two identical groups; translateX 0 -> -50% shifts by
+     exactly one group, and one group (~3000px) always overflows the viewport, so the
+     reset is invisible and there is never a blank gap. Pauses on hover/focus so a review
+     that catches the eye can actually be read. Reuses the marquee-scroll keyframes. */
+  .card-marquee {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+  }
+  .card-marquee__track {
+    display: flex;
+    width: max-content;
+    flex-wrap: nowrap;
+    align-items: stretch; /* every card matches the tallest in the row */
+    animation-name: marquee-scroll;
+    animation-timing-function: linear; /* constant speed, no stutter */
+    animation-iteration-count: infinite;
+    will-change: transform;
+  }
+  .card-marquee:hover .card-marquee__track,
+  .card-marquee:focus-within .card-marquee__track {
+    animation-play-state: paused;
+  }
+  .card-marquee__group {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: stretch;
+    gap: 1.25rem;
+    padding-right: 1.25rem; /* equals the inner gap so the seam spacing is uniform */
+  }
+  .card-marquee__item {
+    display: flex;
+    flex: 0 0 auto;
+    width: 340px;
+  }
+  @media (max-width: 480px) {
+    .card-marquee__item {
+      width: 320px;
+    }
+  }
+
+  /* Reduced motion: no animation. Single static group the user can swipe/trackpad-scroll. */
+  @media (prefers-reduced-motion: reduce) {
+    .card-marquee {
+      overflow-x: auto;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .card-marquee__track {
+      animation: none;
+      will-change: auto;
+    }
+    .card-marquee__group:not(:first-child) {
+      display: none;
+    }
+  }
+
+  @keyframes marquee-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%); /* exactly one half = 3 identical copies */
+    }
+  }
+
+  /* Reduced motion: no scroll, show a single static, centered row */
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      display: flex;
+      justify-content: center;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .marquee__track {
+      animation: none;
+      width: auto;
+      max-width: 100%;
+    }
+    .marquee__group:not(:first-child) {
+      display: none;
+    }
+    .marquee__group:first-child {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
+}
