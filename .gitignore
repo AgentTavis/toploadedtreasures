@@ -17,10 +17,15 @@ deploy_root.py
 
 # Original full-resolution photo library (~68 MB). Kept out of the repo so clones stay
 # fast; the web-ready versions live in website/public/assets.
-Cards/
-Extras/
-Logos/
-Shows/
+#
+# The leading slash matters: these MUST be anchored to the repo root. Without it the
+# pattern matches at any depth, and because Git is case-insensitive on Windows/macOS,
+# "Cards/" would also swallow website/public/assets/cards/ — which silently dropped the
+# Vault card images from the repo and 404'd them on the live site.
+/Cards/
+/Extras/
+/Logos/
+/Shows/
 
 # Editor / OS noise
 .DS_Store
